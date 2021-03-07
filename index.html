@@ -11,13 +11,10 @@
         <div id="globeViz"></div>
         <div class="top-left">
             <h1>Latest</h1>
-            <div id="details">
-                <p>amount: <span id="latest-amount"></span></p>
-                <p>location: <span id="latest-location"></span></p>
-            </div>
+            <div id="latest-list"></div>
         </div>
 
-        <p class="bottom-right">Showing realtime Bitcoin transactions</p>
+        <p class="bottom">Showing realtime Bitcoin transactions</p>
     </div>
 
     <script>
@@ -50,6 +47,7 @@
             var msg = JSON.parse(event.data);
             console.log(msg);
 
+            // Append data to point array
             gData.push({
                 lat: msg.lat,
                 lng: msg.lon,
@@ -57,9 +55,24 @@
                 color: "white",
             });
 
-            document.getElementById("latest-amount").innerHTML = msg.amount + "btc";
-            document.getElementById("latest-location").innerHTML =
-                msg.lat + " " + msg.lon;
+            // Construct Transaction Log HTML
+            // TODO: add expiry date for transaction log
+            if (msg.amount) {
+                var amount = document.createElement("P");
+                amount.innerText = "amount: " + (msg.amount || "... ") + "btc";
+
+                var location = document.createElement("P");
+                location.innerText =
+                    "location: " + (msg.lat || "...") + " " + (msg.lon || "...");
+                var block = document.createElement("div");
+                block.classList.add("transaction");
+
+                block.appendChild(amount);
+                block.appendChild(location);
+
+                var container = document.getElementById("latest-list");
+                container.insertBefore(block, container.firstChild);
+            }
 
             Globe.pointsData(gData);
         };
@@ -79,13 +92,14 @@
         const camera = new THREE.PerspectiveCamera();
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        camera.position.z = 500;
+        camera.position.z = 300;
 
         // Add camera controls
         const tbControls = new THREE.TrackballControls(camera, renderer.domElement);
-        tbControls.minDistance = 101;
+        tbControls.minDistance = 110;
+        tbControls.maxDistance = 1500;
         tbControls.rotateSpeed = 5;
-        tbControls.zoomSpeed = 0.8;
+        tbControls.zoomSpeed = 0.7;
 
         // Kick-off renderer
         (function animate() {
