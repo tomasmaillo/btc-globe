@@ -67,13 +67,17 @@
                 location.innerText =
                     "location: " + (msg.lat || "...") + " " + (msg.lon || "...");
                 var block = document.createElement("div");
-                block.classList.add("transaction");
+                block.classList.add("transaction", "hidden");
 
                 block.appendChild(amount);
                 block.appendChild(location);
 
                 var container = document.getElementById("latest-list");
                 container.insertBefore(block, container.firstChild);
+
+                requestAnimationFrame(() => {
+                    block.classList.remove("hidden");
+                });
             }
 
             Globe.pointsData(gData);

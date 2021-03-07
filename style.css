@@ -68,14 +68,19 @@ p {
 }
 
 .transaction {
+    transition: 0.8s;
     margin-bottom: 10px;
+}
+
+.hidden {
+    color: #888;
 }
 
 a,
 a:visited {
     color: white;
     transition: 0.2s;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 a:hover {
