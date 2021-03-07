@@ -1,0 +1,99 @@
+<head>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/three/examples/js/controls/TrackballControls.js"></script>
+    <script src="https://unpkg.com/three-globe"></script>
+    <title>BTC globe</title>
+</head>
+
+<body>
+    <div class="container">
+        <div id="globeViz"></div>
+        <div class="top-left">
+            <h1>Latest</h1>
+            <div id="details">
+                <p>amount: <span id="latest-amount"></span></p>
+                <p>location: <span id="latest-location"></span></p>
+            </div>
+        </div>
+
+        <p class="bottom-right">Showing realtime Bitcoin transactions</p>
+    </div>
+
+    <script>
+        function map(value, currentLow, currentUpp, targetLow, targetUpp) {
+            return (value / (currentUpp - currentLow)) * (targetUpp - targetLow) * 10;
+        }
+
+        const gData = [];
+
+        const Globe = new ThreeGlobe()
+            .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-dark.jpg")
+            .bumpImageUrl(
+                "https://unpkg.com/three-globe/example/img/earth-topology.png"
+            )
+            .showGraticules(false)
+            .pointsData(gData)
+            .pointRadius(0.1)
+            .pointResolution(15)
+            .pointsMerge(false)
+            .pointsTransitionDuration(1000)
+            .pointAltitude("size")
+            .pointColor("color");
+
+        var exampleSocket = new WebSocket("wss://blocks.wizb.it/ws", [
+            "protocolOne",
+            "protocolTwo",
+        ]);
+        exampleSocket.onmessage = function(event) {
+            var text = "";
+            var msg = JSON.parse(event.data);
+            console.log(msg);
+
+            gData.push({
+                lat: msg.lat,
+                lng: msg.lon,
+                size: map(parseInt(msg.amount), 0, 1000, 0, 20),
+                color: "white",
+            });
+
+            document.getElementById("latest-amount").innerHTML = msg.amount + "btc";
+            document.getElementById("latest-location").innerHTML =
+                msg.lat + " " + msg.lon;
+
+            Globe.pointsData(gData);
+        };
+
+        // Setup renderer
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById("globeViz").appendChild(renderer.domElement);
+
+        // Setup scene
+        const scene = new THREE.Scene();
+        scene.add(Globe);
+        scene.add(new THREE.AmbientLight(0xbbbbbb));
+        scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
+
+        // Setup camera
+        const camera = new THREE.PerspectiveCamera();
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        camera.position.z = 500;
+
+        // Add camera controls
+        const tbControls = new THREE.TrackballControls(camera, renderer.domElement);
+        tbControls.minDistance = 101;
+        tbControls.rotateSpeed = 5;
+        tbControls.zoomSpeed = 0.8;
+
+        // Kick-off renderer
+        (function animate() {
+            // IIFE
+            // Frame cycle
+            tbControls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        })();
+    </script>
+</body>
