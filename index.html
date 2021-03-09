@@ -1,8 +1,7 @@
 <head>
     <link rel="stylesheet" href="style.css" />
-    <script src="https://unpkg.com/three"></script>
-    <script src="https://unpkg.com/three/examples/js/controls/TrackballControls.js"></script>
-    <script src="https://unpkg.com/three-globe"></script>
+    <script src="//unpkg.com/d3-scale"></script>
+    <script src="//unpkg.com/globe.gl"></script>
     <title>BTC globe</title>
 </head>
 
@@ -14,6 +13,11 @@
             <div id="latest-list"></div>
         </div>
 
+        <div class="top-right" title="Only focuses on transactions > 0.5btc">
+            <input type="checkbox" id="toggleFocusCheckbox" checked onclick="focusToggle()">
+            <label for="periph1"> Focus on new transactions </label>
+        </div>
+
         <p class="bottom">
             Showing realtime Bitcoin transactions |
             <a href="https://github.com/Tomasroma64/btc-globe">GitHub</a> feel free to submit a pull request | by
@@ -22,29 +26,55 @@
     </div>
 
     <script>
-        function map(value, currentLow, currentUpp, targetLow, targetUpp) {
-            return (value / (currentUpp - currentLow)) * (targetUpp - targetLow) * 10;
+        focusOnNewTransactions = true;
+
+        function focusToggle() {
+            if (document.getElementById("toggleFocusCheckbox").checked) {
+                focusOnNewTransactions = true;
+            } else {
+                focusOnNewTransactions = false;
+            }
         }
 
         const gData = [];
+        const getAltitude = d => {
+            return 0.01 * (Math.log(d.amount + 0.07) + 2.718);
+        }
 
-        const Globe = new ThreeGlobe()
-            .globeImageUrl("https://i.imgur.com/tgaY68U.jpg")
-            .bumpImageUrl("https://i.imgur.com/zV0auTO.png")
-            .showGraticules(false)
+
+        const elem = document.getElementById('globeViz');
+        const globe = Globe()
+            .backgroundColor('black')
+            .globeImageUrl("img/terrain.jpg")
+            .bumpImageUrl("img/bump.png")
+            .showGraticules(true)
+            .showAtmosphere(true)
+            .labelText('amount')
+            .labelSize(1.5)
+            .labelDotRadius(0.3)
+            .labelLabel(d => `
+                <div>
+                    <b>amount: ${d.amount}btc</b> <br>
+                    ip: ${d.ip}<br>
+                    ${d.lat} ${d.lng}<br>
+                </div>
+            `)
+            .onLabelHover(label => elem.style.cursor = label ? 'pointer' : null)
             .pointsData(gData)
             .pointRadius(0.1)
             .pointResolution(15)
-            .pointsMerge(false)
+            .pointsMerge(true)
             .pointsTransitionDuration(1000)
-            .pointAltitude("size")
-            .pointColor("color");
+            .pointAltitude(getAltitude)
+            .pointColor("color")
+            (elem);
 
-        var exampleSocket = new WebSocket("wss://blocks.wizb.it/ws", [
+
+        var socket = new WebSocket("wss://blocks.wizb.it/ws", [
             "protocolOne",
             "protocolTwo",
         ]);
-        exampleSocket.onmessage = function(event) {
+        socket.onmessage = function(event) {
             var text = "";
             var msg = JSON.parse(event.data);
             console.log(msg);
@@ -53,7 +83,8 @@
             gData.push({
                 lat: msg.lat,
                 lng: msg.lon,
-                size: map(parseInt(msg.amount), 0, 1000, 0, 20),
+                ip: msg.relay,
+                amount: parseFloat(msg.amount),
                 color: "white",
             });
 
@@ -62,6 +93,9 @@
             if (msg.amount) {
                 var amount = document.createElement("P");
                 amount.innerText = "amount: " + (msg.amount || "... ") + "btc";
+                if (parseFloat(msg.amount) > 1) {
+                    amount.classList.add("golden")
+                }
 
                 var location = document.createElement("P");
                 location.innerText =
@@ -80,40 +114,21 @@
                 });
             }
 
-            Globe.pointsData(gData);
+            if (focusOnNewTransactions) {
+                if (parseFloat(msg.amount) > 0.05)
+                    globe.pointOfView({
+                        lat: msg.lat,
+                        lng: msg.lon,
+                        altitude: 0.6
+                    }, 800);
+            }
+
+            globe.labelsData(gData);
+            globe.pointsData(gData);
         };
 
-        // Setup renderer
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById("globeViz").appendChild(renderer.domElement);
-
-        // Setup scene
-        const scene = new THREE.Scene();
-        scene.add(Globe);
-        scene.add(new THREE.AmbientLight(0xbbbbbb));
-        scene.add(new THREE.DirectionalLight(0xffffff, 0.6));
-
-        // Setup camera
-        const camera = new THREE.PerspectiveCamera();
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        camera.position.z = 300;
-
-        // Add camera controls
-        const tbControls = new THREE.TrackballControls(camera, renderer.domElement);
-        tbControls.minDistance = 110;
-        tbControls.maxDistance = 1500;
-        tbControls.rotateSpeed = 5;
-        tbControls.zoomSpeed = 0.7;
-
-        // Kick-off renderer
-        (function animate() {
-            // IIFE
-            // Frame cycle
-            tbControls.update();
-            renderer.render(scene, camera);
-            requestAnimationFrame(animate);
-        })();
+        //globe.controls().autoRotate = true;
+        //globe.controls().autoRotateSpeed = -0.6;
+        //globe.controls().panSpeed = 100.5;
     </script>
 </body>

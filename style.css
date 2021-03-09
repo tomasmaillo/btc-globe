@@ -12,11 +12,21 @@ body {
     color: white;
 }
 
+.golden {
+    color: rgb(238, 232, 145)
+}
+
 .top-left {
     position: absolute;
     top: 8px;
     left: 16px;
     width: 15%;
+}
+
+.top-right {
+    position: absolute;
+    top: 8px;
+    right: 16px;
 }
 
 .bottom {
