@@ -29,17 +29,21 @@
         focusOnNewTransactions = true;
 
         function focusToggle() {
-            if (document.getElementById("toggleFocusCheckbox").checked) {
-                focusOnNewTransactions = true;
-            } else {
-                focusOnNewTransactions = false;
-            }
+            focusOnNewTransactions = document.getElementById("toggleFocusCheckbox").checked
         }
 
         const gData = [];
         const getAltitude = d => {
             return 0.01 * (Math.log(d.amount + 0.07) + 2.718);
         }
+        const getTooltip = d => `
+                <div>
+                    <b>amount: ${d.amount}btc</b> <br>
+                    ip: ${d.ip}<br>
+                    ${d.lat} ${d.lng}<br>
+                </div>
+            `;
+
 
 
         const elem = document.getElementById('globeViz');
@@ -51,15 +55,9 @@
             .showAtmosphere(true)
             .labelText('amount')
             .labelSize(1.5)
-            .labelDotRadius(0.3)
-            .labelLabel(d => `
-                <div>
-                    <b>amount: ${d.amount}btc</b> <br>
-                    ip: ${d.ip}<br>
-                    ${d.lat} ${d.lng}<br>
-                </div>
-            `)
-            .onLabelHover(label => elem.style.cursor = label ? 'pointer' : null)
+            .labelDotRadius(0.25)
+            .labelLabel(getTooltip)
+            //.onLabelHover(label => elem.style.cursor = label ? 'pointer' : null)
             .pointsData(gData)
             .pointRadius(0.1)
             .pointResolution(15)
@@ -75,7 +73,7 @@
             "protocolTwo",
         ]);
         socket.onmessage = function(event) {
-            var text = "";
+
             var msg = JSON.parse(event.data);
             console.log(msg);
 
@@ -85,7 +83,7 @@
                 lng: msg.lon,
                 ip: msg.relay,
                 amount: parseFloat(msg.amount),
-                color: "white",
+                color: "white", //TODO: change this 
             });
 
             // Construct Transaction Log HTML
@@ -93,33 +91,28 @@
             if (msg.amount) {
                 var amount = document.createElement("P");
                 amount.innerText = "amount: " + (msg.amount || "... ") + "btc";
-                if (parseFloat(msg.amount) > 1) {
-                    amount.classList.add("golden")
-                }
+                if (parseFloat(msg.amount) > 1) amount.classList.add("golden")
+
 
                 var location = document.createElement("P");
                 location.innerText =
                     "location: " + (msg.lat || "...") + " " + (msg.lon || "...");
                 var block = document.createElement("div");
-                block.classList.add("transaction", "hidden");
+                block.classList.add("transaction");
 
                 block.appendChild(amount);
                 block.appendChild(location);
 
                 var container = document.getElementById("latest-list");
                 container.insertBefore(block, container.firstChild);
-
-                requestAnimationFrame(() => {
-                    block.classList.remove("hidden");
-                });
             }
 
             if (focusOnNewTransactions) {
-                if (parseFloat(msg.amount) > 0.05)
+                if (parseFloat(msg.amount) > 0.1)
                     globe.pointOfView({
                         lat: msg.lat,
                         lng: msg.lon,
-                        altitude: 0.6
+                        altitude: 0.8
                     }, 800);
             }
 
