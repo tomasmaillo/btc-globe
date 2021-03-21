@@ -16,7 +16,7 @@
         <div class="top-right">
             <h3>Settings</h3>
             <input type="checkbox" id="toggleFocusCheckbox" checked onclick="focusToggle()">
-            <label> Focus on new transactions </label>
+            <label> Focus on new transactions ><input type="number" name="focusTransactionMin" id="focusTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc</label>
             <br>
             <input type="number" id="maxNumTransactions" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 7 + 'px';">
             <label title="Higher values cause more lag in the long term"> Maxmium number of transactions logged </label>

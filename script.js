@@ -1,11 +1,12 @@
 var focusOnNewTransactions = true;
 var currentTrasactionID = 0;
 var maxNumTransactions = 100;
-var minAmountLog = 0.01;
+var minAmountLog = 0.1;
+var focusTransactionMin = 0.05;
 
-
+// SETTINGS
 document.getElementById("toggleFocusCheckbox").checked = focusOnNewTransactions;
-document.getElementById("toggleFocusCheckbox").addEventListener('change', (event) => {
+document.getElementById("toggleFocusCheckbox").addEventListener('click', (event) => {
     focusOnNewTransactions = document.getElementById("toggleFocusCheckbox").checked
 });
 
@@ -14,12 +15,15 @@ function toggleFocus(newState) {
     document.getElementById("toggleFocusCheckbox").checked = focusOnNewTransactions;
 }
 
+document.getElementById("focusTransactionMin").value = focusTransactionMin;
+document.getElementById("focusTransactionMin").addEventListener('input', (event) => {
+    focusTransactionMin = document.getElementById("focusTransactionMin").value;
+});
 
 document.getElementById("logTransactionMin").value = minAmountLog;
 document.getElementById("logTransactionMin").addEventListener('input', (event) => {
     minAmountLog = document.getElementById("logTransactionMin").value;
 });
-
 
 document.getElementById("maxNumTransactions").value = maxNumTransactions;
 document.getElementById("maxNumTransactions").addEventListener('input', (event) => {
@@ -31,18 +35,15 @@ const gData = [];
 const getAltitude = d => {
     return 0.01 * (Math.log(d.amount + 0.07) + 2.718);
 }
-const getTooltip = d => `
+const getTooltip = data => `
                 <div>
-                    <b>amount: ${d.amount}btc</b> <br>
-                    ip: ${d.ip}<br>
-                    ${d.lat} ${d.lng}<br>
+                    <b>amount: ${data.amount}btc</b> <br>
+                    ip: ${data.ip}<br>
+                    ${data.lat} ${data.lng}<br>
                 </div>
             `;
 
-
-
-
-
+// GLOBE SETUP
 const elem = document.getElementById('globeViz');
 const globe = Globe()
     .backgroundColor('black')
@@ -55,7 +56,7 @@ const globe = Globe()
     .labelDotRadius(0.25)
     .labelLabel(getTooltip)
     //.onLabelHover(label => elem.style.cursor = label ? 'pointer' : null)
-    //.onLabelClick(d => window.open(d.url, '_blank'))
+    //.onLabelClick(d => window.open(d.url, '_blank')) TODO: Show transaction details from a transaction explorer website
     .pointsData(gData)
     .pointRadius(0.1)
     .pointResolution(15)
@@ -65,28 +66,28 @@ const globe = Globe()
     .pointColor("color")
     (elem);
 
-
+// NEW DATA HANDLING
 var socket = new WebSocket("wss://blocks.wizb.it/ws", [
     "protocolOne",
     "protocolTwo",
 ]);
 socket.onmessage = function(event) {
-    console.log(`Length of gData: ${gData.length}`)
-    var msg = JSON.parse(event.data);
 
+    var msg = JSON.parse(event.data);
     if (!msg.amount) return;
-    // Append data to point array
+
+    // Append data to array to display in globe
     gData.push({
         lat: msg.lat,
         lng: msg.lon,
         ip: msg.relay,
         id: currentTrasactionID,
         amount: parseFloat(msg.amount),
-        color: "white", //TODO: change this, think of something
+        color: "white", //TODO: this has potential
     });
 
-    // Construct Transaction Log HTML
-    // TODO: add expiry date for transaction log
+
+    // Append transaction to HTML
     if (minAmountLog < msg.amount) {
         var amount = document.createElement("P");
         amount.innerText = "amount: " + (msg.amount || "... ") + "btc";
@@ -99,7 +100,7 @@ socket.onmessage = function(event) {
         var block = document.createElement("div");
         block.classList.add("transaction");
 
-
+        // Click to focus on transaction
         block.onclick = function() {
             toggleFocus(false)
             globe.pointOfView({
@@ -117,8 +118,12 @@ socket.onmessage = function(event) {
         var container = document.getElementById("latest-list");
         container.insertBefore(block, container.firstChild);
 
+        currentTrasactionID++;
+        deleteExtraTransactions();
+    }
 
-        if (focusOnNewTransactions) {
+    if (focusOnNewTransactions) {
+        if (focusTransactionMin < msg.amount) {
             if (parseFloat(msg.amount) > 0.1)
                 globe.pointOfView({
                     lat: msg.lat,
@@ -126,11 +131,6 @@ socket.onmessage = function(event) {
                     altitude: 0.8
                 }, 800);
         }
-
-
-
-        currentTrasactionID++;
-        deleteExtraTransactions();
     }
 
     globe.labelsData(gData);
@@ -139,17 +139,13 @@ socket.onmessage = function(event) {
 
 
 function deleteExtraTransactions() {
-    console.log(`gData: ${gData.length}    maxNumTransactions: ${maxNumTransactions}`)
-    console.log(gData)
-    while (gData.length > maxNumTransactions) {
-        console.log(gData[0])
-        console.log(`Deleted: ${(gData[0].id)}`)
-
-        document.getElementById((gData[0].id)).remove();
-        console.log(gData[0])
-        gData.shift()
-
-
-
+    while (document.getElementById("latest-list").childElementCount > maxNumTransactions) {
+        document.getElementById("latest-list").removeChild(document.getElementById("latest-list").lastChild);
     }
+    // TODO: Handle removing points from globe
+    /*
+    while (gData.length > maxNumTransactions) {
+        gData.shift();
+    }
+    */
 }
