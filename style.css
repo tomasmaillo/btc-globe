@@ -1,3 +1,31 @@
+/* no focus */
+
+*:focus {
+    outline: none;
+}
+
+
+/* no arrows input number */
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+input[type=number] {
+    width: 30px;
+    padding: 2px;
+    background: rgba(255, 255, 255, 0.26);
+    border-radius: 7px;
+    color: white;
+    border: none;
+}
+
 body {
     padding: 0;
     margin: 0;
@@ -17,13 +45,15 @@ body {
 }
 
 .top-left {
+    text-align: left;
     position: absolute;
     top: 8px;
     left: 16px;
-    width: 15%;
+    width: 50%;
 }
 
 .top-right {
+    text-align: right;
     position: absolute;
     top: 8px;
     right: 16px;
@@ -80,6 +110,7 @@ p {
 .transaction {
     transition: 0.8s;
     margin-bottom: 10px;
+    cursor: pointer;
 }
 
 .hidden {
@@ -91,6 +122,7 @@ a:visited {
     color: white;
     transition: 0.2s;
     border-radius: 10px;
+    padding: 0 5 3 5;
 }
 
 a:hover {

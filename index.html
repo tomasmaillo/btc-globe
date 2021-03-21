@@ -9,13 +9,21 @@
     <div class="container">
         <div id="globeViz"></div>
         <div class="top-left">
-            <h1>Latest</h1>
+            <h3>Latest</h3>
             <div id="latest-list"></div>
         </div>
 
-        <div class="top-right" title="Only focuses on transactions > 0.5btc">
+        <div class="top-right">
+            <h3>Settings</h3>
             <input type="checkbox" id="toggleFocusCheckbox" checked onclick="focusToggle()">
-            <label for="periph1"> Focus on new transactions </label>
+            <label> Focus on new transactions </label>
+            <br>
+            <input type="number" id="maxNumTransactions" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 7 + 'px';">
+            <label title="Higher values cause more lag in the long term"> Maxmium number of transactions logged </label>
+            <br>
+            <label> 
+                Only log transactions ><input type="number" name="logTransactionMin" id="logTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc
+            </label>
         </div>
 
         <p class="bottom">
@@ -25,103 +33,5 @@
         </p>
     </div>
 
-    <script>
-        focusOnNewTransactions = true;
-
-        function focusToggle() {
-            focusOnNewTransactions = document.getElementById("toggleFocusCheckbox").checked
-        }
-
-        const gData = [];
-        const getAltitude = d => {
-            return 0.01 * (Math.log(d.amount + 0.07) + 2.718);
-        }
-        const getTooltip = d => `
-                <div>
-                    <b>amount: ${d.amount}btc</b> <br>
-                    ip: ${d.ip}<br>
-                    ${d.lat} ${d.lng}<br>
-                </div>
-            `;
-
-
-
-        const elem = document.getElementById('globeViz');
-        const globe = Globe()
-            .backgroundColor('black')
-            .globeImageUrl("img/terrain.jpg")
-            .bumpImageUrl("img/bump.png")
-            .showGraticules(true)
-            .showAtmosphere(true)
-            .labelText('amount')
-            .labelSize(1.5)
-            .labelDotRadius(0.25)
-            .labelLabel(getTooltip)
-            //.onLabelHover(label => elem.style.cursor = label ? 'pointer' : null)
-            .pointsData(gData)
-            .pointRadius(0.1)
-            .pointResolution(15)
-            .pointsMerge(true)
-            .pointsTransitionDuration(1000)
-            .pointAltitude(getAltitude)
-            .pointColor("color")
-            (elem);
-
-
-        var socket = new WebSocket("wss://blocks.wizb.it/ws", [
-            "protocolOne",
-            "protocolTwo",
-        ]);
-        socket.onmessage = function(event) {
-
-            var msg = JSON.parse(event.data);
-            console.log(msg);
-
-            // Append data to point array
-            gData.push({
-                lat: msg.lat,
-                lng: msg.lon,
-                ip: msg.relay,
-                amount: parseFloat(msg.amount),
-                color: "white", //TODO: change this 
-            });
-
-            // Construct Transaction Log HTML
-            // TODO: add expiry date for transaction log
-            if (msg.amount) {
-                var amount = document.createElement("P");
-                amount.innerText = "amount: " + (msg.amount || "... ") + "btc";
-                if (parseFloat(msg.amount) > 1) amount.classList.add("golden")
-
-
-                var location = document.createElement("P");
-                location.innerText =
-                    "location: " + (msg.lat || "...") + " " + (msg.lon || "...");
-                var block = document.createElement("div");
-                block.classList.add("transaction");
-
-                block.appendChild(amount);
-                block.appendChild(location);
-
-                var container = document.getElementById("latest-list");
-                container.insertBefore(block, container.firstChild);
-            }
-
-            if (focusOnNewTransactions) {
-                if (parseFloat(msg.amount) > 0.1)
-                    globe.pointOfView({
-                        lat: msg.lat,
-                        lng: msg.lon,
-                        altitude: 0.8
-                    }, 800);
-            }
-
-            globe.labelsData(gData);
-            globe.pointsData(gData);
-        };
-
-        //globe.controls().autoRotate = true;
-        //globe.controls().autoRotateSpeed = -0.6;
-        //globe.controls().panSpeed = 100.5;
-    </script>
+    <script src="script.js"></script>
 </body>
