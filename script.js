@@ -1,10 +1,18 @@
+// TOGGLE GUI
+document.getElementById("toggle-gui").addEventListener('click', (event) => {
+    var gui = document.getElementById("gui");
+    console.log(gui.style.visibility)
+    gui.style.visibility = (gui.style.visibility == 'visible') ? 'hidden' : 'visible';
+});
+
+
+// SETTINGS
 var focusOnNewTransactions = true;
 var currentTrasactionID = 0;
 var maxNumTransactions = 100;
 var minAmountLog = 0.1;
 var focusTransactionMin = 0.05;
 
-// SETTINGS
 document.getElementById("toggleFocusCheckbox").checked = focusOnNewTransactions;
 document.getElementById("toggleFocusCheckbox").addEventListener('click', (event) => {
     focusOnNewTransactions = document.getElementById("toggleFocusCheckbox").checked
@@ -30,6 +38,15 @@ document.getElementById("maxNumTransactions").addEventListener('input', (event) 
     maxNumTransactions = document.getElementById("maxNumTransactions").value;
 });
 
+// STATS
+var totalNumTransactions = 0;
+var totalAmountTransactions = 0;
+
+setInterval(function() {
+    document.getElementById("numPlottedTransactions").innerHTML = gData.length;
+    document.getElementById("totalNumTransactions").innerHTML = totalNumTransactions;
+    document.getElementById("averageAmountTransactions").innerHTML = (totalAmountTransactions / totalNumTransactions).toFixed(2);
+}, 500); // refreshed every few seconds
 
 const gData = [];
 const getAltitude = d => {
@@ -71,10 +88,16 @@ var socket = new WebSocket("wss://blocks.wizb.it/ws", [
     "protocolOne",
     "protocolTwo",
 ]);
+socket.onopen = function(event) {
+    document.getElementById("connecting").remove()
+}
 socket.onmessage = function(event) {
 
     var msg = JSON.parse(event.data);
     if (!msg.amount) return;
+
+    totalNumTransactions++;
+    totalAmountTransactions += parseFloat(msg.amount);
 
     // Append data to array to display in globe
     gData.push({
@@ -123,13 +146,12 @@ socket.onmessage = function(event) {
     }
 
     if (focusOnNewTransactions) {
-        if (focusTransactionMin < msg.amount) {
-            if (parseFloat(msg.amount) > 0.1)
-                globe.pointOfView({
-                    lat: msg.lat,
-                    lng: msg.lon,
-                    altitude: 0.8
-                }, 800);
+        if (focusTransactionMin < parseFloat(msg.amount)) {
+            globe.pointOfView({
+                lat: msg.lat,
+                lng: msg.lon,
+                altitude: 0.8
+            }, 800);
         }
     }
 
@@ -139,13 +161,14 @@ socket.onmessage = function(event) {
 
 
 function deleteExtraTransactions() {
+    // Might not be needed if it doesent affect performance TODO: test theory out
     while (document.getElementById("latest-list").childElementCount > maxNumTransactions) {
         document.getElementById("latest-list").removeChild(document.getElementById("latest-list").lastChild);
     }
-    // TODO: Handle removing points from globe
-    /*
-    while (gData.length > maxNumTransactions) {
+
+    // Has to be done to maintain performance
+    while (gData.length > 500) {
         gData.shift();
     }
-    */
+
 }

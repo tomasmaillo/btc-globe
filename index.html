@@ -8,30 +8,50 @@
 <body>
     <div class="container">
         <div id="globeViz"></div>
-        <div class="top-left">
-            <h3>Latest</h3>
-            <div id="latest-list"></div>
+
+
+        <div class="top-middle">
+            <div id="toggle-gui">
+                [toggle GUI]
+            </div>
+            <h2 id="connecting">connecting...</h2>
         </div>
 
-        <div class="top-right">
-            <h3>Settings</h3>
-            <input type="checkbox" id="toggleFocusCheckbox" checked onclick="focusToggle()">
-            <label> Focus on new transactions ><input type="number" name="focusTransactionMin" id="focusTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc</label>
-            <br>
-            <input type="number" id="maxNumTransactions" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 7 + 'px';">
-            <label title="Higher values cause more lag in the long term"> Maxmium number of transactions logged </label>
-            <br>
-            <label> 
-                Only log transactions ><input type="number" name="logTransactionMin" id="logTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc
-            </label>
-        </div>
+        <div id="gui" style="visibility: visible;">
 
-        <p class="bottom">
-            Showing realtime Bitcoin transactions |
-            <a href="https://github.com/Tomasroma64/btc-globe">GitHub</a> feel free to submit a pull request | by
-            <a href="http://tomasmaillo.com">tomasmaillo</a>
-        </p>
+            <div class="top-left">
+                <h3>Latest</h3>
+                <div id="latest-list"></div>
+            </div>
+
+            <div class="top-right">
+                <h3>Settings</h3>
+                <input type="checkbox" id="toggleFocusCheckbox" checked onclick="focusToggle()">
+                <label> Focus on new transactions ><input type="number" name="focusTransactionMin" id="focusTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc</label>
+                <br>
+                <input type="number" id="maxNumTransactions" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 7 + 'px';">
+                <label title="Higher values cause more lag in the long term"> Maxmium number of transactions logged </label>
+                <br>
+                <label> 
+                    Only log transactions ><input type="number" name="logTransactionMin" id="logTransactionMin" onkeypress="this.style.width = ((this.value.length + 1) * 8) + 5 + 'px';">btc
+                </label>
+                <h3>Stats</h3>
+                <label>Transactions plotted: <span id="numPlottedTransactions"></span></label>
+                <br>
+                <label>Transactions received: <span id="totalNumTransactions"></span></label>
+                <br>
+                <label>Average transaction amount: <span id="averageAmountTransactions"></span>btc</label>
+            </div>
+
+            <p class="bottom-middle">
+                Showing realtime Bitcoin transactions |
+                <a href="https://github.com/Tomasroma64/btc-globe">GitHub</a> feel free to submit a pull request | by
+                <a href="http://tomasmaillo.com">tomasmaillo</a>
+            </p>
+
+        </div>
     </div>
 
     <script src="script.js"></script>
+
 </body>
